@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kian - الموظفين</title>
+    <style>
+        body { font-family: Tahoma, Arial; background: #f4f4f9; margin: 0; padding: 20px; }
+        .header { background: #1d6f5f; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; font-size: 20px; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .form-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; flex: 1; min-width: 150px; }
+        button { padding: 10px 20px; background: #1d6f5f; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #145245; }
+        button.danger { background: #b3261e; }
+        button.danger:hover { background: #8c1d17; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #333; }
+        tr:hover { background: #f1f1f1; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>إدارة الموظفين</h1>
+        <span id="status" style="font-size: 14px;">جاري الاتصال...</span>
+    </div>
+    
+    <div class="container">
+        <div class="form-group">
+            <input type="text" id="empCode" placeholder="الكود (مثال: 1001)" required>
+            <input type="text" id="empName" placeholder="اسم الموظف" required>
+            <input type="text" id="empDept" placeholder="القسم (اختياري)">
+            <button onclick="saveEmployee()">حفظ الموظف</button>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>الكود</th>
+                    <th>الاسم</th>
+                    <th>القسم</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody id="empTableBody">
+                <!-- البيانات هتظهر هنا -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const API = '/api/employees';
+
+        // جلب الموظفين وعرضهم
+        async function loadEmployees() {
+            try {
+                const res = await fetch(API);
+                const data = await res.json();
+                const tbody = document.getElementById('empTableBody');
+                tbody.innerHTML = '';
+                
+                data.forEach(emp => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${emp.code}</td>
+                        <td>${emp.name}</td>
+                        <td>${emp.dept || '-'}</td>
+                        <td><button class="danger" onclick="deleteEmployee('${emp.code}')">حذف</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                document.getElementById('status').innerText = '✅ متصل';
+                document.getElementById('status').style.color = '#90ee90';
+            } catch (err) {
+                document.getElementById('status').innerText = '❌ فشل الاتصال';
+                document.getElementById('status').style.color = '#ff6b6b';
+            }
+        }
+
+        // إضافة أو تعديل موظف
+        async function saveEmployee() {
+            const code = document.getElementById('empCode').value.trim();
+            const name = document.getElementById('empName').value.trim();
+            const dept = document.getElementById('empDept').value.trim();
+            
+            if (!code || !name) return alert('الكود والاسم مطلوبين!');
+
+            try {
+                await fetch(API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, name, dept })
+                });
+                
+                // تفريغ الخانات
+                document.getElementById('empCode').value = '';
+                document.getElementById('empName').value = '';
+                document.getElementById('empDept').value = '';
+                
+                loadEmployees(); // تحديث الجدول
+            } catch (err) {
+                alert('حدث خطأ أثناء الحفظ');
+            }
+        }
+
+        // حذف موظف
+        async function deleteEmployee(code) {
+            if (!confirm('هل أنت متأكد من حذف الموظف ' + code + '؟')) return;
+            try {
+                await fetch(`${API}/${code}`, { method: 'DELETE' });
+                loadEmployees();
+            } catch (err) {
+                alert('حدث خطأ أثناء الحذف');
+            }
+        }
+
+        // تحميل البيانات عند فتح الصفحة
+        loadEmployees();
+    </script>
+</body>
+</html>
