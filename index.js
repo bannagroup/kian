@@ -5,7 +5,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { neon } = require('@neondatabase/serverless');
 
-const sql = neon(process.env.DATABASE_URL);
+const sql = neon(process.env.DATABASE_URL, { fetchConnectionCache: true });
 const app = express();
 app.use(cors({ origin: process.env.CORS_ORIGIN || false }));
 app.use(express.json({ limit: '25mb' }));
