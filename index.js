@@ -228,6 +228,12 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-init()
-  .then(() => app.listen(PORT, '0.0.0.0', () => console.log(`✅ السيرفر شغال على المنفذ ${PORT}`)))
-  .catch(e => { console.error('فشل الاتصال بقاعدة البيانات:', e.message); process.exit(1); });
+
+if (process.env.VERCEL) {
+  init().catch(e => console.error('DB init error:', e.message));
+  module.exports = app;
+} else {
+  init()
+    .then(() => app.listen(PORT, '0.0.0.0', () => console.log(`✅ السيرفر شغال على المنفذ ${PORT}`)))
+    .catch(e => { console.error('فشل الاتصال بقاعدة البيانات:', e.message); process.exit(1); });
+}
